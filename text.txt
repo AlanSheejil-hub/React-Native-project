@@ -1,0 +1,110 @@
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import api from '@/app/api/api';
+import { Ionicons } from '@expo/vector-icons';
+
+export default function CalDetails() {
+  const { equipmentId } = useLocalSearchParams();
+  const [equipmentDetails, setEquipmentDetails] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchEquipmentDetails = async () => {
+      if (!equipmentId) return;
+      const parsedEquipmentId = Array.isArray(equipmentId)
+        ? equipmentId[0]
+        : equipmentId;
+      const data = await api.EquipmentId(parsedEquipmentId as string);
+      if (data) {
+        setEquipmentDetails(data);
+      }
+
+      setLoading(false);
+    };
+    fetchEquipmentDetails();
+  }, [equipmentId]);
+
+  if (loading) {
+    return (
+      <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />
+    );
+  }
+
+  if (!equipmentDetails) {
+    return <Text style={styles.errorText}>No equipment details found</Text>;
+  }
+
+  return (
+    <View style={styles.container}>
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <Ionicons name="chevron-back" size={28} color="black" />
+        <Text style={styles.backText}>Back</Text>
+      </TouchableOpacity>
+      <Text style={styles.title}>Equipment Details</Text>
+      {equipmentDetails.map((equipment, index) => (
+        <View style={styles.detailsContainer} key={index}>
+          {Object.entries(equipment).map(([key, value]) => (
+            <View key={key} style={styles.detailRow}>
+              <Text style={styles.label}>
+                {key.replace(/([A-Z])/g, ' $1').trim()}:
+              </Text>
+              <Text style={styles.value}>{String(value)}</Text>
+            </View>
+          ))}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff',
+  },
+  loader: {
+    marginTop: 50,
+  },
+  errorText: {
+    textAlign: 'center',
+    fontSize: 16,
+    color: 'red',
+    marginTop: 20,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    marginTop: 40,
+  },
+  detailsContainer: {
+    padding: 15,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  label: { fontSize: 16, fontWeight: 'bold' },
+  value: { fontSize: 16, color: '#333' },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  backText: {
+    fontSize: 18,
+    marginLeft: 5,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+});
